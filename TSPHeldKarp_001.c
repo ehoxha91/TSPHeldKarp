@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-double tspoptimalcost;
+double tspoptimalcost = -0.0;
 void initialize_TSP()
 { 
 	/* It's better to use TSP with adjency matrix. */
@@ -234,18 +234,13 @@ void initialize_TSP()
 
 	/* Clean arrays for work. */
 	for (int i = 0; i < (1 << n); i++)
-	{
-		for (int j = 0; j < n; j++)
-		{
-			dynamicprog[i][j] = -1;
-			memo[i][j] = 99999;
-		}
+	{   for (int j = 0; j < n; j++)
+		{  dynamicprog[i][j] = -1; memo[i][j] = 99999;}
 	}
 
 	/* start = 0x01, position 0 */
 	tspoptimalcost = TSP(1, 0);
 	getoptimalpath();
-	
 	
 	/* Draw optimal solution. */
 	struct RequestPoint *p1 = NULL;
@@ -315,19 +310,18 @@ double TSP(long int setnkey, int position)
 		return dynamicprog[setnkey][position];
 	}
 
-	double currentcost = DOUBLE_MAX;		/* Current minimum cost...*/
+	double currentcost = DOUBLE_MAX*1.00;		/* Current minimum cost...*/
 	int parentvertex = -1;			
 	for (int vertex = 0; vertex < n; vertex++)
 	{
 		if ((setnkey&(1 << vertex)) == 0)
 		{											  /* Generate new set(visit the next point). */
-			double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);		/* TSP Recursive Call. */
+			double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
 			if (currentcost > newCost) 
 			{   parentvertex = vertex; currentcost = newCost;	}	/* We will use this to generate our tour. */
-		}														/* If the newpath costs less make choose it.*/	
+		}									/* If the newpath costs less make choose it.*/	
 	}
-	memo[setnkey][parentvertex] = currentcost;					/* We save each value with corresponding set 
-																   and parentvertex so we can track it back to find the tour. */
+	memo[setnkey][parentvertex] = currentcost;	/* We save each value with corresponding set and parentvertex so we can track it back to find the tour. */
 	return dynamicprog[setnkey][position] = currentcost;
 }
 
@@ -373,25 +367,27 @@ void about_info()
 {
 	XDrawRectangle(display_ptr, win, white, 705, 0, 190, 120);
 	XDrawRectangle(display_ptr, win, white, 0, 0, 700, 485);
-	
+	struct Pxy _tempoin1 = { 730, 140 };
+	drawstring(white, _tempoin1, "START POINT");
+	XFillArc( display_ptr, win, wallcolor, 710, 130, 12, 12, 0, 360*64);
+
 	XDrawRectangle(display_ptr, win, white,705,405,190,80);
 	struct Pxy _tempoint = { 708, 420 };
-	drawstring(white, _tempoint, "TSP Exact Algorithm");
+	drawstring(white, _tempoint, "TSP EXACT ALGORITHM - HELD KARP");
 	_tempoint.y = 435;
-	drawstring(white, _tempoint, "Held Karp");
-	_tempoint.y = 450;
-	drawstring(orange, _tempoint, "Advanced Algorithms");
+	drawstring(white, _tempoint, "ADVANCED ALGORITHMS");
 	_tempoint.y = 465;
-	drawstring(orange, _tempoint, "Lecturer: Peter Brass");
+	drawstring(green, _tempoint, "LECTURER: DR. PETER BRASS");
 	_tempoint.y = 480;
-	drawstring(green, _tempoint, "Author: Ejup Hoxha");
-	_tempoint.y = 15;
+	drawstring(green, _tempoint, "  AUTHOR: EJUP HOXHA");
+	_tempoint.x = 708, _tempoint.y = 15;
+	drawstring(white, _tempoint, "OPTIMAL TOUR: ");
+	_tempoint.y = 115;
 	drawstring(white, _tempoint, "OPTIMAL COST: ");
 	_tempoint.x = 800;
 	drawdouble(blue, _tempoint ,tspoptimalcost);
-	_tempoint.x = 708, _tempoint.y = 30;
-	drawstring(white, _tempoint, "OPTIMAL TOUR: ");
-	_tempoint.y = 45;
+	_tempoint.x = 708;
+	_tempoint.y = 30;
 	for(int i = 0; i < ind; i++)
 	{
 		drawint(blue, _tempoint, tour[i]+1);
@@ -531,8 +527,6 @@ void GetColors()
 	    XSetForeground( display_ptr, wallcolor, tmp_color1.pixel );
 }
 
-#pragma region INPUT DECODING
-
 void CheckStringType(char tmpstr[], int lencheck)
 {
 	char lastchar;
@@ -623,6 +617,7 @@ void CheckStringType(char tmpstr[], int lencheck)
 	}
 	
 }
+
 void readrequests(char * _buf, int seg_id)
 {
 	char tmp[30];
@@ -682,6 +677,3 @@ void readrequests(char * _buf, int seg_id)
 	}
 	AddRequestPoint(_pxy);
 }
-
-#pragma endregion
-
