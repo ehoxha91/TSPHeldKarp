@@ -1,5 +1,5 @@
 /*	
-   gcc -o wnd TSPHeldKarp_001.c -lX11 -lm -L/usr/X11R6/lib	--compile line	
+   gcc -o outprogram TSPHeldKarp_001.c -lX11 -lm -L/usr/X11R6/lib	--compile line	
    
    Student:    Ejup Hoxha 
    Semester:   Fall 2018 - 
@@ -18,39 +18,39 @@
 #include <string.h>
 #include "HelperFile.h"			/* Few linked lists used primarly for drawings and logging. */
 
-//#define DEBUG					/* Forget that this egzists*/
-//#define DRAWNODES				/* If we want to draw nodes of our graph. */
-//#define PRINT					/* This one is not needed neither. */
+//#define DEBUG				/* Forget that this egzists*/
+//#define DRAWNODES			/* If we want to draw nodes of our graph. */
+//#define PRINT				/* This one is not needed neither. */
 //#define PRINT_TOUR			/* Print optimal solution. 0= first point in input file, n=last point. */
 #define XBORDER 700
 #define YBORDER 485
 
 #define INT_MAX 2147483640		/* Just 7 points below the border of integer in c. */
-#define DOUBLE_MAX 3.402823E+38 /* Double maximum number. */
+#define DOUBLE_MAX 3.402823E+38 	/* Double maximum number. */
 int VISITED_ALL;
 
 void initialize_TSP();			/* Initialize variables and graph for TSP. */
 void getoptimalpath();			/* After we calculate the optimal path, find the sequence of the tour. */
-double TSP(long int, int);
+long double TSP(long int, int);
 
 /* 
-   If you want to plug more than 22 cities, just increase the number 22 to the number you want
+   If you want to plug more than 18 cities, just increase the number 18 to the number you want
    but beaware about the limits of long int and int.
 */
 
-long int memo[1 << 22][22];							/* Memo for finding the tour. */
-long int dynamicprog[(1 << 22)][22];	    		/* Memoization for dynamic programming. */
-int n;												/* Number of points. */
-int ind = 0;										/* Side-variable tour/generator. */
-int tour[22];										/* We save our tour in this array. */
+long double memo[1 << 18][18][18];				/* Memo for finding the tour. */
+long double dynamicprog[(1 << 20)][20];	    		/* Memoization for dynamic programming. */
+int n;							/* Number of points. */
+int ind = 0;						/* Side-variable tour/generator. */
+int tour[20];						/* We save our tour in this array. */
 
-double graph[22][22];							    /* After few manipulations, we have the graph inside a vector
-											  		   that contains objects of Vertices and all their informations.
-											   		   To calculate TSP we will translate that graph to adjcency matrix. */
+long double graph[20][20];					/* After few manipulations, we have the graph inside a vector
+							   that contains objects of Vertices and all their informations.
+							   To calculate TSP we will translate that graph to adjcency matrix. */
 
 void about_info();									/* Re/Draw info about our program. */
 void readrequests(char * _buf, int node_id); 		/* Convert text file to segment function. */
-void CheckStringType(char tmpstr[], int lencheck);  /* Check the format of the input. */
+void CheckStringType(char tmpstr[], int lencheck);  	/* Check the format of the input. */
 
 Display *display_ptr;
 Screen *screen_ptr;
@@ -75,16 +75,15 @@ char pb_txt[255];
 
 XEvent report;
 
-GC gc, red, green, white, yellow, white_2, blue, blue_2, orange_2, orange, black, wallcolor;
-XGCValues gc_values, gc_orange_v, gc_orange_v2, gc_red_v, gc_blue_v, gc_blue_v2, gc_green_v,
-	  gc_white_v, wallcolor_v, gc_yellow_v, gc_white_v2, blue_sv, gc_black_v;
+GC gc, red, green, white, blue, orange, wallcolor;
+XGCValues gc_values, gc_orange_v, gc_red_v, gc_blue_v, gc_green_v,
+	  gc_white_v, wallcolor_v, blue_sv;
 Colormap color_map;
 XColor tmp_color1, tmp_color2;
 unsigned long valuemask = 0;
 
 /* Drawing Functions */
 void GetColors();	
-void redraw();
 int drw_rp = 0;
 void draw_line(GC _gc, struct Pxy[]);
 void draw_request(GC _color, struct Pxy, int _savetolist);
@@ -94,13 +93,14 @@ void drawint(GC _scolor, struct Pxy, int);
 void drawdouble(GC _scolor, struct Pxy, double inttodraw);
 void clear_area(struct Pxy, int _wclear, int _hclear, int _riseExposeEvent); 
 
+void drawtest();
 
 int main(int argc, char **argv)
 {
 	FILE *ptr_file;
 	char *buf = malloc(200*20);
-	ptr_file = fopen(argv[1], "rb+"); 
-	if(!ptr_file)
+	ptr_file = fopen(argv[1], "rb+"); 	/* On project2, the problem reading the file was because I used "r" */
+	if(!ptr_file)						/* and by findings on internet, it's unstable. Instead, using "rb+" never fails. */   
 		return 1;
 	int _sg_id = 0;
 	while(fgets(buf, 1000, ptr_file)!=NULL)
@@ -110,12 +110,8 @@ int main(int argc, char **argv)
 	}
 	fclose(ptr_file);
 
-	/* n is number of points. */
-	n = request_count;
-	#ifdef PRINT
-	printf("Number of points = %d\n",n);
-	#endif
-	VISITED_ALL = (1 << n) - 1;					/* set = 1x11 */
+	n = request_count;				/* n is number of points. */
+	VISITED_ALL = (1 << n) - 1;		/* set = 1x11 */
 
 	/* Open Display: Try to connect to X server. */
 	display_ptr = XOpenDisplay(display_name);
@@ -173,8 +169,8 @@ int main(int argc, char **argv)
 	XFlush(display_ptr);
 	GetColors();	
 	
-	CreateGraph();								/* Create the graph from points. */
-	initialize_TSP();							/* Initialize and call TSP solver. */
+	CreateGraph();					/* Create the graph from points. */
+	initialize_TSP();				/* Initialize and call TSP solver. */
 	while(1)
 	{ 
 
@@ -204,7 +200,7 @@ int main(int argc, char **argv)
 			case KeyPress:
 			{	
 				XLookupString(&report.xkey,pb_txt,255,&keyR,0);
-				if(pb_txt[0] == 'q') /* Expose Simulation. */
+				if(pb_txt[0] == 'q' ||pb_txt[0] == 'Q' ) /* Expose Simulation. */
 				{
 					exit(-1);
 				}
@@ -219,7 +215,125 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-double tspoptimalcost = -0.0;
+void drawtest()
+{		
+		struct RequestPoint *p1, *p2;
+		struct Pxy _p1,  _p2;
+		p1 = GetPoint(0);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(5);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(5);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(3);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(3);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(4);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(4);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(6);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(6);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(14);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(14);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(7);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(7);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(15);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(15);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(11);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(11);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(11);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(8);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(13);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(13);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(12);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(12);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(10);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(10);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(9);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(9);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(1);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(1);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(2);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+		p1 = GetPoint(2);
+		_p1.x = p1->_req_x;
+		_p1.y = p1->_req_y;
+		p2 = GetPoint(0);
+		_p2.x = p2->_req_x;
+		_p2.y = p2->_req_y;
+		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
+}
+
+long double tspoptimalcost = -0.0;
 void initialize_TSP()
 { 
 	/* It's better to use TSP with adjency matrix. */
@@ -235,7 +349,13 @@ void initialize_TSP()
 	/* Clean arrays for work. */
 	for (int i = 0; i < (1 << n); i++)
 	{   for (int j = 0; j < n; j++)
-		{  dynamicprog[i][j] = -1; memo[i][j] = 99999;}
+		{  dynamicprog[i][j] = -1; 
+		   
+		   for(int k = 0; k < n; k++)
+		   {
+			   memo[i][j][k] = -1;
+		   }
+		}
 	}
 
 	/* start = 0x01, position 0 */
@@ -246,7 +366,6 @@ void initialize_TSP()
 	struct RequestPoint *p1 = NULL;
 	struct RequestPoint *p2 = NULL;
 	struct Pxy _p1, _p2;
-	struct Pxy p1p2[2];
 	for (int i = 0; i < ind; i++)
 	{
 		#ifdef PRINT_TOUR
@@ -262,30 +381,32 @@ void initialize_TSP()
 	}
 	#ifdef PRINT
 	printf("\n");
-	printf("Totoal Cost =%d\n", result);
+	printf("Totoal Cost =%Lf\n", tspoptimalcost);
 	#endif
 }
 
 void getoptimalpath()
 {
-	long int endnode = (1 << n) - 1;
-	long int startnode = 1;
+	int endmask = (1 << n) - 1;
+	int startmask = 1;
 	int nodeid = -1;
+	int parentnode = 0;
 	tour[ind] = 0;
 	ind++;
 
-	while (endnode != startnode)
+	while (endmask != startmask)
 	{
-		int stepminimum = INT_MAX;
-		for (int i = 1; i<n; i++)
+		long double stepminimum = INT_MAX * 10.1;
+		for (int j = 0; j < n; j++)
 		{
-			if (stepminimum > memo[startnode][i] && memo[startnode][i] != -1)
+			if (stepminimum > memo[startmask][parentnode][j] && memo[startmask][parentnode][j] != -1)
 			{
-				nodeid = i;
-				stepminimum = memo[startnode][i];
+				nodeid = j;
+				stepminimum = memo[startmask][parentnode][j];
 			}
 		}
-		startnode = startnode ^ (1 << nodeid);
+		parentnode = nodeid;
+		startmask = startmask ^ (1 << nodeid);
 		tour[ind] = nodeid;
 		ind++;
 	}
@@ -293,13 +414,12 @@ void getoptimalpath()
 	ind++;
 }
 
-double TSP(long int setnkey, int position)
+long double TSP(long int setnkey, int position)
 {
 	/* Did we finish this part? 
 	   If yes, just return the last part of the cycle to the start node. */
 	if (setnkey == VISITED_ALL)
 	{
-		dynamicprog[setnkey][position] = graph[position][0];
 		return graph[position][0];
 	}
 
@@ -310,19 +430,23 @@ double TSP(long int setnkey, int position)
 		return dynamicprog[setnkey][position];
 	}
 
-	double currentcost = DOUBLE_MAX*1.00;		/* Current minimum cost...*/
+	long double currentcost = INT_MAX*1.233234423;		/* Current minimum cost...*/
 	int parentvertex = -1;			
-	for (int vertex = 0; vertex < n; vertex++)
+	for (int vertex = 1; vertex < n; vertex++)
 	{
 		if ((setnkey&(1 << vertex)) == 0)
 		{											  /* Generate new set(visit the next point). */
-			double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
+			long double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
 			if (currentcost > newCost) 
-			{   parentvertex = vertex; currentcost = newCost;	}	/* We will use this to generate our tour. */
+			{   
+				parentvertex = vertex; 
+				currentcost = newCost;	
+			}								/* We will use this to generate our tour. */
 		}									/* If the newpath costs less make choose it.*/	
 	}
-	memo[setnkey][parentvertex] = currentcost;	/* We save each value with corresponding set and parentvertex so we can track it back to find the tour. */
-	return dynamicprog[setnkey][position] = currentcost;
+	memo[setnkey][position][parentvertex] = currentcost; /* Fast solution for path generator  but not optimal in memory terms. */
+	dynamicprog[setnkey][position] = currentcost;
+	return currentcost;
 }
 
 void draw_request(GC _color, struct Pxy _pxy, int _isReDraw)
@@ -446,16 +570,6 @@ void GetColors()
   	else
 	    XSetForeground( display_ptr, blue, tmp_color1.pixel );
 
-	black = XCreateGC(display_ptr, win, valuemask, &gc_black_v);
-	XSetLineAttributes(display_ptr, black, 1, LineSolid,CapRound, JoinRound);
-	if( XAllocNamedColor( display_ptr, color_map, "Blue", &tmp_color1, &tmp_color2 ) == 0 )
-    	{   
-            printf("failed to get color Black\n"); 
-	    exit(-1);
-	}
-  	else
-	    XSetForeground( display_ptr, black, tmp_color1.pixel );
-
 	orange = XCreateGC(display_ptr, win, valuemask, &gc_orange_v);
 	XSetLineAttributes(display_ptr, orange, 1, LineSolid,CapRound, JoinRound);
 	if( XAllocNamedColor( display_ptr, color_map, "OrangeRed", &tmp_color1, &tmp_color2 ) == 0 )
@@ -474,48 +588,7 @@ void GetColors()
 	    exit(-1);
 	} 
   	else
-	    XSetForeground( display_ptr, white, tmp_color1.pixel );
-
-	yellow = XCreateGC(display_ptr, win, valuemask, &gc_yellow_v);
-	XSetLineAttributes(display_ptr, yellow, 1, LineSolid,CapRound, JoinRound);
-	if( XAllocNamedColor( display_ptr, color_map, "Yellow", &tmp_color1, &tmp_color2 ) == 0 )
-    	{   
-            printf("failed to get color yellow\n"); 
-	    exit(-1);
-	} 
-  	else
-	    XSetForeground( display_ptr, yellow, tmp_color1.pixel );
-
-	blue_2 = XCreateGC(display_ptr, win, valuemask, &gc_blue_v2);
-	XSetLineAttributes(display_ptr, blue_2, 2, LineSolid,CapRound, JoinRound);
-	if( XAllocNamedColor( display_ptr, color_map, "DeepSkyBlue", &tmp_color1, &tmp_color2 ) == 0 )
-    	{   
-            printf("failed to get color DeepSkyBlue\n"); 
-	    exit(-1);
-	}
-  	else
-	    XSetForeground( display_ptr, blue_2, tmp_color1.pixel );
-
-	orange_2 = XCreateGC(display_ptr, win, valuemask, &gc_orange_v2);
-	XSetLineAttributes(display_ptr, orange_2, 2, LineSolid,CapRound, JoinRound);
-	if( XAllocNamedColor( display_ptr, color_map, "OrangeRed", &tmp_color1, &tmp_color2 ) == 0 )
-    	{   
-            printf("failed to get color orange\n"); 
-	    exit(-1);
-	} 
-  	else
-	    XSetForeground( display_ptr, orange_2, tmp_color1.pixel );
-
-	white_2 = XCreateGC(display_ptr, win, valuemask, &gc_white_v2);
-	XSetLineAttributes(display_ptr, white_2, 3, LineSolid,CapRound, JoinRound);
-	if( XAllocNamedColor( display_ptr, color_map, "white", &tmp_color1, &tmp_color2 ) == 0 )
-    	{   
-            printf("failed to get color white\n"); 
-	    exit(-1);
-	} 
-  	else
-	    XSetForeground( display_ptr, white_2, tmp_color1.pixel );
-
+	    XSetForeground( display_ptr, white, tmp_color1.pixel );\
 	wallcolor = XCreateGC(display_ptr, win, valuemask, &wallcolor_v);
 	XSetLineAttributes(display_ptr, wallcolor, 2, LineSolid,CapRound, JoinRound);
 	if( XAllocNamedColor( display_ptr, color_map, "DeepPink", &tmp_color1, &tmp_color2 ) == 0 )

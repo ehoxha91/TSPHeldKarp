@@ -113,16 +113,16 @@ struct Vertice
 	int id;
 	int px;
 	int py;
-	double neighbourcost[30];
+	long double neighbourcost[30];
 };
 
 struct Vertice graphlist[30];
 
-float calcostnodes(struct Vertice _from, struct Vertice _to)
+long double calcostnodes(struct Vertice _from, struct Vertice _to)
 {
-	double ax = pow(_from.px-_to.px, 2);
-	double ay = pow(_from.py-_to.py, 2);
-	return sqrt(ax+ay);
+	long double ax = powl(_from.px-_to.px, 2);
+	long double ay = powl(_from.py-_to.py, 2);
+	return sqrtl(ax+ay);
 }
 
 int nodecount = 0;
@@ -141,7 +141,7 @@ void CreateGraph()
 			for(int j = 0; j < request_count; j++)
 			{
 				/* If we found ourselves. */
-				if(i==j) _node.neighbourcost[j] = 0.0;
+				if(i==j) _node.neighbourcost[j] = 0;
 				else
 				{
 					reqpoint2 = GetPoint(j);
@@ -158,15 +158,19 @@ void CreateGraph()
 
 void PrintGraph()
 {
+	printf("{");
 	for(int i = 0; i < nodecount; i++)
 	{
 		struct Vertice tempnode = graphlist[i];
-		
+		printf(",{");
 		for(int j = 0; j < nodecount; j++)
 		{
-			printf("Node[%d]COST[%d] = %f\n",i,j,tempnode.neighbourcost[j]);
+			//printf("Node[%d]COST[%d] = %f\n",i,j,tempnode.neighbourcost[j]);
+			printf(",%Lf",tempnode.neighbourcost[j]);
 		}
+		printf("}\n");
 	}
+	printf("}");
 	
 }
 
@@ -191,5 +195,3 @@ void CreateSegmentNodes()
 }
 
 #pragma endregion
-
-
