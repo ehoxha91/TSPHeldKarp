@@ -31,24 +31,26 @@ int VISITED_ALL;
 
 void initialize_TSP();			/* Initialize variables and graph for TSP. */
 void getoptimalpath();			/* After we calculate the optimal path, find the sequence of the tour. */
-long double TSP(long int, int);
+double TSP(long int, int);
 
 /* 
-   If you want to plug more than 18 cities, just increase the number 18 to the number you want
+   If you want to plug more than 18 cities, just increase the number 20 to the number you want
    but beaware about the limits of long int and int.
 */
 
-long double memo[1 << 18][18][18];				/* Memo for finding the tour. */
-long double dynamicprog[(1 << 20)][20];	    		/* Memoization for dynamic programming. */
-int n;							/* Number of points. */
-int ind = 0;						/* Side-variable tour/generator. */
-int tour[20];						/* We save our tour in this array. */
+double memo[1 << 21][21];				/* Memo for finding the tour. */
+long int reserverIDs_counter = 0;			/* Helper variables for tour generator. */
+int reserveIDs[1 << 21][21];				/* I used 2D matrices for generating path, to save memory. */
 
-long double graph[20][20];					/* After few manipulations, we have the graph inside a vector
+double dynamicprog[(1 << 21)][21];	 		/* Memoization for dynamic programming. */
+int n;								/* Number of points. */
+int ind = 0;						/* Side-variable tour/generator. */
+int tour[21];						/* We save our tour in this array. */
+double graph[21][21];					/* After few manipulations, we have the graph inside a vector
 							   that contains objects of Vertices and all their informations.
 							   To calculate TSP we will translate that graph to adjcency matrix. */
 
-void about_info();									/* Re/Draw info about our program. */
+void about_info();					/* Re/Draw info about our program. */
 void readrequests(char * _buf, int node_id); 		/* Convert text file to segment function. */
 void CheckStringType(char tmpstr[], int lencheck);  	/* Check the format of the input. */
 
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
 	    _sg_id++;
 	}
 	fclose(ptr_file);
-
+	///printf("\ncities: %d\n", request_count);
 	n = request_count;				/* n is number of points. */
 	VISITED_ALL = (1 << n) - 1;		/* set = 1x11 */
 
@@ -215,131 +217,14 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void drawtest()
-{		
-		struct RequestPoint *p1, *p2;
-		struct Pxy _p1,  _p2;
-		p1 = GetPoint(0);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(5);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(5);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(3);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(3);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(4);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(4);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(6);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(6);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(14);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(14);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(7);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(7);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(15);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(15);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(11);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(11);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(11);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(8);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(13);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(13);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(12);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(12);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(10);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(10);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(9);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(9);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(1);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(1);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(2);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-		p1 = GetPoint(2);
-		_p1.x = p1->_req_x;
-		_p1.y = p1->_req_y;
-		p2 = GetPoint(0);
-		_p2.x = p2->_req_x;
-		_p2.y = p2->_req_y;
-		AddSegment(_p1.x, _p1.y, _p2.x, _p2.y);
-}
-
-long double tspoptimalcost = -0.0;
+double tspoptimalcost = -0.0;
 void initialize_TSP()
 { 
 	/* It's better to use TSP with adjency matrix. */
 	struct Vertice cnode = graphlist[0];
 	for(int i = 0; i < n; i++)
 	{
+		tour[i] = -1;
 	 	for(int j = 0; j < n; j++)
 	 	{
 	 		graph[i][j] = graphlist[i].neighbourcost[j];
@@ -347,19 +232,15 @@ void initialize_TSP()
 	}
 
 	/* Clean arrays for work. */
-	for (int i = 0; i < (1 << n); i++)
+	for (int i = 0; i < (1 << 21); i++)
 	{   for (int j = 0; j < n; j++)
 		{  dynamicprog[i][j] = -1; 
-		   
-		   for(int k = 0; k < n; k++)
-		   {
-			   memo[i][j][k] = -1;
-		   }
-		}
+		   memo[i][j] = -1;}
 	}
-
+	
 	/* start = 0x01, position 0 */
 	tspoptimalcost = TSP(1, 0);
+	/* get the optimal sequence in order. */
 	getoptimalpath();
 	
 	/* Draw optimal solution. */
@@ -397,16 +278,17 @@ void getoptimalpath()
 	while (endmask != startmask)
 	{
 		long double stepminimum = INT_MAX * 10.1;
-		for (int j = 0; j < n; j++)
+		int addr = reserveIDs[startmask][parentnode];
+		for (int i = 0; i < n; i++)
 		{
-			if (stepminimum > memo[startmask][parentnode][j] && memo[startmask][parentnode][j] != -1)
+			if (stepminimum > memo[addr][i] && memo[addr][i] != -1)
 			{
-				nodeid = j;
-				stepminimum = memo[startmask][parentnode][j];
+				nodeid = i;
+				stepminimum = memo[addr][i];
 			}
 		}
 		parentnode = nodeid;
-		startmask = startmask ^ (1 << nodeid);
+		startmask = startmask ^ (1 << nodeid); /* Toggle bit at position nodeid. */
 		tour[ind] = nodeid;
 		ind++;
 	}
@@ -414,7 +296,7 @@ void getoptimalpath()
 	ind++;
 }
 
-long double TSP(long int setnkey, int position)
+double TSP(long int setnkey, int position)
 {
 	/* Did we finish this part? 
 	   If yes, just return the last part of the cycle to the start node. */
@@ -430,13 +312,13 @@ long double TSP(long int setnkey, int position)
 		return dynamicprog[setnkey][position];
 	}
 
-	long double currentcost = INT_MAX*1.233234423;		/* Current minimum cost...*/
+	double currentcost = INT_MAX*1.233234423;		/* Current minimum cost...*/
 	int parentvertex = -1;			
 	for (int vertex = 1; vertex < n; vertex++)
 	{
 		if ((setnkey&(1 << vertex)) == 0)
 		{											  /* Generate new set(visit the next point). */
-			long double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
+			double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
 			if (currentcost > newCost) 
 			{   
 				parentvertex = vertex; 
@@ -444,7 +326,12 @@ long double TSP(long int setnkey, int position)
 			}								/* We will use this to generate our tour. */
 		}									/* If the newpath costs less make choose it.*/	
 	}
-	memo[setnkey][position][parentvertex] = currentcost; /* Fast solution for path generator  but not optimal in memory terms. */
+	
+	/* Book-keeping for path generation. */
+	reserveIDs[setnkey][position] = reserverIDs_counter;
+	memo[reserverIDs_counter][parentvertex] = currentcost;
+	reserverIDs_counter++;	
+		
 	dynamicprog[setnkey][position] = currentcost;
 	return currentcost;
 }
@@ -493,7 +380,11 @@ void about_info()
 	XDrawRectangle(display_ptr, win, white, 0, 0, 700, 485);
 	struct Pxy _tempoin1 = { 730, 140 };
 	drawstring(white, _tempoin1, "START POINT");
+	_tempoin1.y = _tempoin1.y + 15;
+	drawstring(white, _tempoin1, "POINTS TOTAL ");
 	XFillArc( display_ptr, win, wallcolor, 710, 130, 12, 12, 0, 360*64);
+	_tempoin1.x = 710;
+	drawint(green, _tempoin1, n);
 
 	XDrawRectangle(display_ptr, win, white,705,405,190,80);
 	struct Pxy _tempoint = { 708, 420 };

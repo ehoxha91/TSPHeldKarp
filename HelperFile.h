@@ -118,10 +118,10 @@ struct Vertice
 
 struct Vertice graphlist[30];
 
-long double calcostnodes(struct Vertice _from, struct Vertice _to)
+double calcostnodes(struct Vertice _from, struct Vertice _to)
 {
-	long double ax = powl(_from.px-_to.px, 2);
-	long double ay = powl(_from.py-_to.py, 2);
+	double ax = powl(_from.px-_to.px, 2);
+	double ay = powl(_from.py-_to.py, 2);
 	return sqrtl(ax+ay);
 }
 
