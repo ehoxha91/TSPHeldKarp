@@ -33,17 +33,11 @@ void initialize_TSP();			/* Initialize variables and graph for TSP. */
 void getoptimalpath();			/* After we calculate the optimal path, find the sequence of the tour. */
 double TSP(long int, int);
 
-/* 
-   If you want to plug more than 18 cities, just increase the number 20 to the number you want
-   but beaware about the limits of long int and int.
-*/
-
 double memo[1 << 21][21];				/* Memo for finding the tour. */
 long int reserverIDs_counter = 0;			/* Helper variables for tour generator. */
 int reserveIDs[1 << 21][21];				/* I used 2D matrices for generating path, to save memory. */
-
 double dynamicprog[(1 << 21)][21];	 		/* Memoization for dynamic programming. */
-int n;								/* Number of points. */
+int n;							/* Number of points. */
 int ind = 0;						/* Side-variable tour/generator. */
 int tour[21];						/* We save our tour in this array. */
 double graph[21][21];					/* After few manipulations, we have the graph inside a vector
@@ -102,17 +96,17 @@ int main(int argc, char **argv)
 	FILE *ptr_file;
 	char *buf = malloc(200*20);
 	ptr_file = fopen(argv[1], "rb+"); 	/* On project2, the problem reading the file was because I used "r" */
-	if(!ptr_file)						/* and by findings on internet, it's unstable. Instead, using "rb+" never fails. */   
+	if(!ptr_file)				/* and by findings on internet, it's unstable. Instead, using "rb+" never fails. */   
 		return 1;
 	int _sg_id = 0;
 	while(fgets(buf, 1000, ptr_file)!=NULL)
 	{
-	    readrequests(buf, _sg_id);	/* Get each line and convert it to a segment */
+	    readrequests(buf, _sg_id);		/* Get each line and convert it to a segment */
 	    _sg_id++;
 	}
 	fclose(ptr_file);
-	///printf("\ncities: %d\n", request_count);
-	n = request_count;				/* n is number of points. */
+
+	n = request_count;			/* n is number of points. */
 	VISITED_ALL = (1 << n) - 1;		/* set = 1x11 */
 
 	/* Open Display: Try to connect to X server. */
@@ -232,7 +226,7 @@ void initialize_TSP()
 	}
 
 	/* Clean arrays for work. */
-	for (int i = 0; i < (1 << 21); i++)
+	for (int i = 0; i <= (1 << 21)-1; i++)
 	{   for (int j = 0; j < n; j++)
 		{  dynamicprog[i][j] = -1; 
 		   memo[i][j] = -1;}
@@ -240,6 +234,7 @@ void initialize_TSP()
 	
 	/* start = 0x01, position 0 */
 	tspoptimalcost = TSP(1, 0);
+	
 	/* get the optimal sequence in order. */
 	getoptimalpath();
 	
