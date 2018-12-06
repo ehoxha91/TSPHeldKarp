@@ -5,7 +5,7 @@
    Semester:   Fall 2018 - 
    Class:      Advanced Algorithms - Dr. Peter Brass
    University: City University of New York - Groove School of Engineering
-
+   This version is slow - Reason: Uses linked list instead of matrices. 
 */
 
 #include <X11/Xlib.h>
@@ -39,7 +39,7 @@ int reserveIDs[1 << 21][21];				/* I used 2D matrices for generating path, to sa
 double dynamicprog[(1 << 21)][21];	 		/* Memoization for dynamic programming. */
 int n;							/* Number of points. */
 int ind = 0;						/* Side-variable tour/generator. */
-int tour[21];						/* We save our tour in this array. */
+int tour[23];						/* We save our tour in this array. */
 double graph[21][21];					/* After few manipulations, we have the graph inside a vector
 							   that contains objects of Vertices and all their informations.
 							   To calculate TSP we will translate that graph to adjcency matrix. */
@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 	GetColors();	
 	
 	CreateGraph();					/* Create the graph from points. */
+	printf("\nSolving TSP...");
 	initialize_TSP();				/* Initialize and call TSP solver. */
 	while(1)
 	{ 
@@ -224,14 +225,14 @@ void initialize_TSP()
 	 		graph[i][j] = graphlist[i].neighbourcost[j];
 	 	}	
 	}
-
 	/* Clean arrays for work. */
-	for (int i = 0; i <= (1 << 21)-1; i++)
+	for (int i = 0; i < (1 << n); i++)
 	{   for (int j = 0; j < n; j++)
 		{  dynamicprog[i][j] = -1; 
-		   memo[i][j] = -1;}
+		   memo[i][j] = -1; 
+		   reserveIDs[i][j] = -1;
+		}
 	}
-	
 	/* start = 0x01, position 0 */
 	tspoptimalcost = TSP(1, 0);
 	
@@ -269,19 +270,28 @@ void getoptimalpath()
 	int parentnode = 0;
 	tour[ind] = 0;
 	ind++;
-
 	while (endmask != startmask)
 	{
 		long double stepminimum = INT_MAX * 10.1;
-		int addr = reserveIDs[startmask][parentnode];
-		for (int i = 0; i < n; i++)
+		// int addr = reserveIDs[startmask][parentnode];
+		// for (int i = 0; i < n; i++)
+		// {
+		// 	if (stepminimum > memo[addr][i] && memo[addr][i] != -1 && memo[addr][i] != 0)
+		// 	{
+		// 		nodeid = i;
+		// 		stepminimum = memo[addr][i];
+		// 	}
+		// }
+		for(int i = 0; i < n; i++)
 		{
-			if (stepminimum > memo[addr][i] && memo[addr][i] != -1)
-			{
+			struct PathQueue* tmpnode = GetCity(startmask,parentnode,i);
+			if(tmpnode != NULL)
+			if(stepminimum > tmpnode->cost ){
 				nodeid = i;
-				stepminimum = memo[addr][i];
+				stepminimum =tmpnode->cost;
 			}
 		}
+
 		parentnode = nodeid;
 		startmask = startmask ^ (1 << nodeid); /* Toggle bit at position nodeid. */
 		tour[ind] = nodeid;
@@ -308,7 +318,7 @@ double TSP(long int setnkey, int position)
 	}
 
 	double currentcost = INT_MAX*1.233234423;		/* Current minimum cost...*/
-	int parentvertex = -1;			
+	int childvertex = -1;			
 	for (int vertex = 1; vertex < n; vertex++)
 	{
 		if ((setnkey&(1 << vertex)) == 0)
@@ -316,18 +326,19 @@ double TSP(long int setnkey, int position)
 			double newCost = graph[position][vertex] + TSP(setnkey | 1 << vertex, vertex);	  /* TSP Recursive Call. */
 			if (currentcost > newCost) 
 			{   
-				parentvertex = vertex; 
+				childvertex = vertex; 
 				currentcost = newCost;	
 			}								/* We will use this to generate our tour. */
 		}									/* If the newpath costs less make choose it.*/	
 	}
 	
 	/* Book-keeping for path generation. */
-	reserveIDs[setnkey][position] = reserverIDs_counter;
-	memo[reserverIDs_counter][parentvertex] = currentcost;
-	reserverIDs_counter++;	
-		
+	//reserveIDs[setnkey][position] = reserverIDs_counter;
+	//memo[reserverIDs_counter][childvertex] = currentcost;
+	//reserverIDs_counter++;	
+	pushvertex(setnkey,position,childvertex,currentcost);
 	dynamicprog[setnkey][position] = currentcost;
+
 	return currentcost;
 }
 

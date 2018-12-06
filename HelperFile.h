@@ -195,3 +195,55 @@ void CreateSegmentNodes()
 }
 
 #pragma endregion
+
+
+#pragma region PathQueue
+struct PathQueue
+{
+	long int setnkey;
+	double cost;
+	int position;
+	int child;
+	struct PathQueue* nextvertex;
+};
+long int pathqueue_cnt = 0;
+struct PathQueue* pathqueue = NULL;
+
+void pushvertex(long int _setnkey, int _position, int _child, double _val)
+{
+	struct PathQueue *tmp = (struct PathQueue*)malloc(sizeof(struct PathQueue));
+	tmp->setnkey = _setnkey;
+	tmp->position = _position;
+	tmp->child = _child;
+	tmp->cost = _val;
+	tmp->nextvertex = pathqueue;
+	pathqueue_cnt++;
+	pathqueue = tmp;
+}
+
+struct PathQueue* GetCity(int _setnkey, int _position, int _child)
+{
+	struct PathQueue* temp = pathqueue;
+	while(temp != NULL)
+	{ if(_setnkey == temp->setnkey)
+	  { 
+		  if(_position == temp->position && _child == temp->child)
+		  return temp;
+	  } 
+	  temp = temp->nextvertex; 
+	}
+	return temp;
+}
+
+void DeletePathQueue()
+{
+	int iter = 0;
+	while(pathqueue != NULL)
+	{
+		free(pathqueue);
+		pathqueue_cnt--;
+		pathqueue = pathqueue->nextvertex;
+	}
+}
+
+#pragma endregion
