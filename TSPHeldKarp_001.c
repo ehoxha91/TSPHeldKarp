@@ -336,6 +336,7 @@ double TSP(long int setnkey, int position)
 	//reserveIDs[setnkey][position] = reserverIDs_counter;
 	//memo[reserverIDs_counter][childvertex] = currentcost;
 	//reserverIDs_counter++;	
+	
 	pushvertex(setnkey,position,childvertex,currentcost);
 	dynamicprog[setnkey][position] = currentcost;
 
